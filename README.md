@@ -2,7 +2,7 @@
 
 **GWater2FCGH** 是 [GWater2](https://github.com/meetric1/gwater2) 面向 Windows x64 和 [Con's GMod Host（CGH）](https://github.com/LytharaLab/ConsGHost) 的非官方独立移植版。原版由 **Meetric 与 GWater2 贡献者**开发。原版支持者、翻译人员及其他贡献者的署名保留在游戏内「制作者名单」。
 
-源代码以 [GWater2 提交 fb4fba3](https://github.com/meetric1/gwater2/tree/fb4fba381a6ef9f98bf42a67a69e86d3628ee504) 为基础。GWater2FCGH 贡献者于 **2026-11-22** 完成 CGH 原生模块适配、Win64 单包构建及界面标识更新。流体、布料、武器、实体、预设和游戏联机协议沿用上游。
+源代码以 [GWater2 提交 fb4fba3](https://github.com/meetric1/gwater2/tree/fb4fba381a6ef9f98bf42a67a69e86d3628ee504) 为基础。Convex89524 于 **2026-11-22** 完成 CGH 原生模块适配、Win64 单包构建及界面标识更新。流体、布料、武器、实体、预设和游戏联机协议沿用上游。
 
 *GWater2FCGH is an independent, unofficial Windows x64 port of Meetric's GWater2 for Con's GMod Host. It is maintained separately from upstream.*
 
