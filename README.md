@@ -8,6 +8,8 @@
 
 > **适配对象**：本文所说的 64 位指 GMod 主分支（Main）的 Windows 64 位版，也就是 CGH 启动的 `gmod_win64.exe`；不要与 Steam 上的 `x86-64` 分支混淆，那不是本移植的适配对象。
 
+<img width="2560" height="1440" alt="0100c8e0ffeb7a6fb354d3fe827ca474" src="https://github.com/user-attachments/assets/05d6563e-7027-42d8-b8b4-ee2c39d9f694" />
+
 ## 安装
 
 需要 GMod Main 64-bit (Windows)（由 CGH 启动的 `gmod_win64.exe`）、支持 Direct3D 11 的显卡、Con's GMod Host 1.2.2、CGH-LAPI 0.2.0。
