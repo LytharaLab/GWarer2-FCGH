@@ -1211,7 +1211,7 @@ gwater2_adminonly (0-1)
 
 "gwater2.menu.FCGH.about"=[[
 GWater2 For Con's GMod Host
-你正在使用 GWater2FCGH。這是面向 Windows x64 與 Con's GMod Host 的 GWater2 非官方獨立移植版。
+你正在使用 GWater2FCGH。這是面向 GMod Main 64-bit (Windows) 與 Con's GMod Host 的 GWater2 非官方獨立移植版。
 
 原版 GWater2 由 Meetric 與上游貢獻者開發。GWater2FCGH 貢獻者於 2026-11-22 完成 CGH 移植與介面標示更新。原版署名可在製作人員頁查閱。
 

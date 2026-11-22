@@ -1215,7 +1215,7 @@ modes behave differently.
 
 "gwater2.menu.FCGH.about"=[[
 GWater2 For Con's GMod Host
-You are using GWater2FCGH, an independent, unofficial port of GWater2 for Windows x64.
+You are using GWater2FCGH, an independent, unofficial port of GWater2 for GMod Main 64-bit (Windows).
 
 Original GWater2 by Meetric and its contributors. The GWater2FCGH contributors adapted it for Con's GMod Host on 2026-11-22. The Credits tab lists the upstream contributors.
 

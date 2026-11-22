@@ -1,14 +1,16 @@
 # GWater2 For Con's GMod Host
 
-**GWater2FCGH** 是 [GWater2](https://github.com/meetric1/gwater2) 面向 Windows x64 和 [Con's GMod Host（CGH）](https://github.com/LytharaLab/ConsGHost) 的非官方独立移植版。原版由 **Meetric 与 GWater2 贡献者**开发。原版支持者、翻译人员及其他贡献者的署名保留在游戏内「制作者名单」。
+**GWater2FCGH** 是 [GWater2](https://github.com/meetric1/gwater2) 面向 **GMod Main 64-bit (Windows)** 和 [Con's GMod Host（CGH）](https://github.com/LytharaLab/ConsGHost) 的非官方独立移植版。原版由 **Meetric 与 GWater2 贡献者**开发。原版支持者、翻译人员及其他贡献者的署名保留在游戏内「制作者名单」。
 
 源代码以 [GWater2 提交 fb4fba3](https://github.com/meetric1/gwater2/tree/fb4fba381a6ef9f98bf42a67a69e86d3628ee504) 为基础。Convex89524 于 **2026-11-22** 完成 CGH 原生模块适配、Win64 单包构建及界面标识更新。流体、布料、武器、实体、预设和游戏联机协议沿用上游。
 
-*GWater2FCGH is an independent, unofficial Windows x64 port of Meetric's GWater2 for Con's GMod Host. It is maintained separately from upstream.*
+*GWater2FCGH is an independent, unofficial port of Meetric's GWater2 for GMod Main 64-bit (Windows) and Con's GMod Host. It is maintained separately from upstream.*
+
+> **适配对象**：本文所说的 64 位指 GMod 主分支（Main）的 Windows 64 位版，也就是 CGH 启动的 `gmod_win64.exe`；不要与 Steam 上的 `x86-64` 分支混淆，那不是本移植的适配对象。
 
 ## 安装
 
-需要 Windows 版 Garry’s Mod（由 CGH 启动的 `gmod_win64.exe`）、支持 Direct3D 11 的显卡、Con's GMod Host 1.2.0，以及已启用且已安装客户端与服务端 Lua 桥的 CGH-LAPI 0.1.1。
+需要 GMod Main 64-bit (Windows)（由 CGH 启动的 `gmod_win64.exe`）、支持 Direct3D 11 的显卡、Con's GMod Host 1.2.0，以及已启用且已安装客户端与服务端 Lua 桥的 CGH-LAPI 0.1.1。
 
 1. 解压构建得到的 `GWater2FCGH.zip`，把整个 `GWater2FCGH` 文件夹放进 CGH Launcher 的 `Mods`。
 2. 在 Steam Workshop 和本地 addons 中停用原版 GWater2，以免游戏挂载两套同名 Lua 和资源。
