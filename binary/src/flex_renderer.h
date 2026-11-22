@@ -5,52 +5,28 @@
 #include "meshutils.h"		// Fixes linker errors
 #include "flex_solver.h"
 #include <vector>
-#include "ThreadPool.h"
 
-#define MAX_PRIMATIVES 21845
-#define SQRT3 1.73205081
 #define VERTEX_GWATER2 VERTEX_POSITION | VERTEX_NORMAL | VERTEX_TEXCOORD0_2D
 
-struct FlexRendererThreadData {
-	VMatrix view_projection_matrix;
-	Vector4D* particle_positions;
-	Vector4D* particle_ani0 = nullptr;	// also used as triangle normals
-	Vector4D* particle_ani1 = nullptr;
-	Vector4D* particle_ani2 = nullptr;
-	int* particle_phases;	// also used as triangle indices
-	int* particle_active;
-	Vector eye_pos;
-	//int* render_buffer;
-	int max_particles;
-	float radius;
-	bool cull;	// should we do vvis culling?
+struct FlexRenderVertex {
+	Vector position;
+	Vector normal;
+	float u;
+	float v;
 };
 
 class FlexRenderer {
 private:
-	ThreadPool* threads = nullptr;
-	//int* water_buffer = nullptr;	// which particles should be rendered?
-	//int* diffuse_buffer = nullptr;	// ^
-	std::vector<std::future<IMesh*>> water_queue;
-	std::vector<IMesh*> water_meshes;
-
-	std::vector<std::future<IMesh*>> diffuse_queue;
-	std::vector<IMesh*> diffuse_meshes;
-
-	std::vector<std::future<IMesh*>> triangle_queue;
-	std::vector<IMesh*> triangle_meshes;
-	
-	void destroy_meshes();
-	void update_water();
-	void update_diffuse();
-	void update_cloth();
+	std::vector<FlexRenderVertex> water_vertices;
+	std::vector<FlexRenderVertex> diffuse_vertices;
+	std::vector<FlexRenderVertex> cloth_vertices;
 public:
 	void draw_water();
 	void draw_diffuse();
 	void draw_cloth();
 
 	void build_meshes(FlexSolver* flex, float diffuse_radius, bool cull);
-
-	FlexRenderer();
-	~FlexRenderer();
+#ifdef GWATER2_CGH
+	static bool is_render_context_queued();
+#endif
 };

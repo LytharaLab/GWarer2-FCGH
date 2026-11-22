@@ -34,6 +34,41 @@ local debug_absorption = CreateClientConVar("gwater2_debug_absorption", "0", fal
 local debug_normals = CreateClientConVar("gwater2_debug_normals", "0", false)
 local debug_mipmap = CreateClientConVar("gwater2_debug_mipmap", "0", false)
 
+local queue_mode = GetConVar("mat_queue_mode")
+local previous_queue_mode
+local restore_queue_at
+
+local function is_render_context_queued()
+	return gwater2.renderer.IsRenderContextQueued and gwater2.renderer:IsRenderContextQueued()
+end
+
+local function restore_queue_mode()
+	if previous_queue_mode ~= nil and queue_mode:GetInt() == 0 then
+		RunConsoleCommand("mat_queue_mode", tostring(previous_queue_mode))
+	end
+	previous_queue_mode = nil
+	restore_queue_at = nil
+end
+
+hook.Add("Think", "gwater2_material_queue", function()
+	if not queue_mode then return end
+	if gwater2.solver:GetActiveParticles() == 0 then
+		if previous_queue_mode ~= nil then
+			restore_queue_at = restore_queue_at or SysTime() + 1
+			if SysTime() >= restore_queue_at then restore_queue_mode() end
+		end
+		return
+	end
+
+	restore_queue_at = nil
+	if previous_queue_mode == nil and queue_mode:GetInt() ~= 0 and is_render_context_queued() then
+		-- GMod Main can stall in the material system while the 3D water passes run in queued mode.
+		previous_queue_mode = queue_mode:GetInt()
+		RunConsoleCommand("mat_queue_mode", "0")
+	end
+end)
+hook.Add("ShutDown", "gwater2_material_queue", restore_queue_mode)
+
 -- sets up a lighting origin in sourceengine
 -- TODO: cache your fucking tables and csmodels!!!
 local function unfuck_lighting(pos0, pos1)
@@ -184,6 +219,7 @@ end
 
 hook.Add("RenderScene", "gwater2_render", function(eye_pos, eye_angles, fov)
 	if gwater2.options.render_mirrors:GetInt() != 1 then return end
+	if is_render_context_queued() then return end
 
 	cam.Start3D(eye_pos, eye_angles, fov)
 		gwater2.renderer:BuildMeshes(gwater2.solver, 0.25, false)
@@ -202,6 +238,7 @@ local vrmod_material = Material("models/wireframe")
 hook.Add("PostDrawOpaqueRenderables", "gwater2_render", function(depth, sky, sky3d)	--PreDrawViewModels
 	if sky3d then return end	-- dont render in skybox
 	if gwater2.solver:GetActiveParticles() < 1 then return end
+	if is_render_context_queued() then return end
 
  	-- dont render in mirrors unless specified
 	local mirrors = gwater2.options.render_mirrors:GetInt()

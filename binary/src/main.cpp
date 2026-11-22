@@ -992,6 +992,14 @@ LUA_FUNCTION(FLEXRENDERER_DrawCloth) {
 	return 0;
 }
 
+#ifdef GWATER2_CGH
+LUA_FUNCTION(FLEXRENDERER_IsRenderContextQueued) {
+	LUA->CheckType(1, FLEXRENDERER_METATABLE);
+	LUA->PushBool(FlexRenderer::is_render_context_queued());
+	return 1;
+}
+#endif
+
 /************************************* Global LUA Interface **********************************************/
 
 #define ADD_FUNCTION(LUA, funcName, tblName) LUA->PushCFunction(funcName); LUA->SetField(-2, tblName)
@@ -1181,6 +1189,9 @@ static int bind_client_lua(ILuaBase* LUA) {
 	ADD_FUNCTION(LUA, FLEXRENDERER_DrawWater, "DrawWater");
 	ADD_FUNCTION(LUA, FLEXRENDERER_DrawDiffuse, "DrawDiffuse");
 	ADD_FUNCTION(LUA, FLEXRENDERER_DrawCloth, "DrawCloth");
+#ifdef GWATER2_CGH
+	ADD_FUNCTION(LUA, FLEXRENDERER_IsRenderContextQueued, "IsRenderContextQueued");
+#endif
 	LUA->SetField(-2, "__index");
 
 	// _G.FlexSolver = NewFlexSolver

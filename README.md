@@ -8,11 +8,17 @@
 
 > **适配对象**：本文所说的 64 位指 GMod 主分支（Main）的 Windows 64 位版，也就是 CGH 启动的 `gmod_win64.exe`；不要与 Steam 上的 `x86-64` 分支混淆，那不是本移植的适配对象。
 
+## 1.0.1（2026-11-23）
+
+- 修复 GMod Main Win64 放置 3D 水时的崩溃。渲染器使用与该版本匹配的材质系统接口，并通过 Source 动态网格绘制水体。
+- 当 3D 水遇到队列渲染时，临时切换到 `mat_queue_mode 0`。清空 3D 粒子后恢复原设置。菜单里的 2D 预览沿用当前渲染模式。
+- 已在 `gm_flatgrass` 单人地图上以 CGH 1.2.2、CGH-LAPI 0.2.0、GMultCore 0.2.1 和 DXVK 3.1 验证高级水枪、镜面选项和 6,012 个粒子的 3D 水渲染，并确认清空后恢复到 `mat_queue_mode 2`。
+
 ## 安装
 
 需要 GMod Main 64-bit (Windows)（由 CGH 启动的 `gmod_win64.exe`）、支持 Direct3D 11 的显卡、Con's GMod Host 1.2.2、CGH-LAPI 0.2.0。
 
-1. 解压构建得到的 `GWater2FCGH-*.zip`，把整个 `GWater2FCGH` 文件夹放进 CGH Launcher 的 `Mods`。
+1. 解压 `GWater2FCGH-v1.0.1.zip` 或从源码构建得到的 `GWater2FCGH.zip`，把整个 `GWater2FCGH` 文件夹放进 CGH Launcher 的 `Mods`。从旧版升级时，先退出 GMod，再一起更新模组的元数据、原生 DLL 和 Lua 文件。
 2. 在 Steam Workshop 和本地 addons 中停用原版 GWater2，以免游戏挂载两套同名 Lua 和资源。
 3. 从 CGH Launcher 启动游戏。进图后按 **G** 打开 GWater2FCGH 菜单。
 
