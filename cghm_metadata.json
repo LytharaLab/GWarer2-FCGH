@@ -1,0 +1,15 @@
+{
+  "schemaVersion": 1,
+  "id": "gwater2.fcgh",
+  "name": "GWater2 For Con's GMod Host",
+  "version": "1.0.0",
+  "description": "GWater2FCGH is an unofficial port of Meetric's GWater2 for Con's GMod Host on Windows x64.",
+  "author": "Meetric and the GWater2 contributors; CGH port by GWater2FCGH contributors",
+  "enabled": true,
+  "loadAsSubprocess": false,
+  "dependencies": [
+    { "id": "cgh.lapi", "minVersion": "0.1.1", "optional": false }
+  ],
+  "managedAssemblies": [],
+  "nativeLibraries": ["gwater2fcgh_win64.dll"]
+}

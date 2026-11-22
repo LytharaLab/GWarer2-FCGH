@@ -1,0 +1,3 @@
+RobotoMonoVariable.ttf (Version 3.000)
+Copyright 2015 The Roboto Mono Project Authors (https://github.com/googlefonts/robotomono)
+Licensed under the Apache License, Version 2.0. See RobotoMono-Apache-2.0.txt.
