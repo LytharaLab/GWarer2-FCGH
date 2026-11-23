@@ -963,9 +963,9 @@ LUA_FUNCTION(FLEXRENDERER_BuildMeshes) {
 	LUA->CheckType(1, FLEXRENDERER_METATABLE);
 	LUA->CheckType(2, FLEXSOLVER_METATABLE);
 	LUA->CheckNumber(3);
-	GET_FLEXRENDERER(1)->build_meshes(GET_FLEXSOLVER(2), LUA->GetNumber(3), LUA->GetBool(4));
-
-	return 0;
+	const auto visible = GET_FLEXRENDERER(1)->build_meshes(GET_FLEXSOLVER(2), LUA->GetNumber(3), LUA->GetBool(4));
+	for (bool present : visible) LUA->PushBool(present);
+	return static_cast<int>(visible.size());
 }
 
 // Renders water IMesh* structs (built from func. above)
@@ -996,6 +996,12 @@ LUA_FUNCTION(FLEXRENDERER_DrawCloth) {
 LUA_FUNCTION(FLEXRENDERER_IsRenderContextQueued) {
 	LUA->CheckType(1, FLEXRENDERER_METATABLE);
 	LUA->PushBool(FlexRenderer::is_render_context_queued());
+	return 1;
+}
+
+LUA_FUNCTION(FLEXRENDERER_CanRenderInCurrentContext) {
+	LUA->CheckType(1, FLEXRENDERER_METATABLE);
+	LUA->PushBool(FlexRenderer::can_render_in_current_context());
 	return 1;
 }
 #endif
@@ -1191,6 +1197,7 @@ static int bind_client_lua(ILuaBase* LUA) {
 	ADD_FUNCTION(LUA, FLEXRENDERER_DrawCloth, "DrawCloth");
 #ifdef GWATER2_CGH
 	ADD_FUNCTION(LUA, FLEXRENDERER_IsRenderContextQueued, "IsRenderContextQueued");
+	ADD_FUNCTION(LUA, FLEXRENDERER_CanRenderInCurrentContext, "CanRenderInCurrentContext");
 #endif
 	LUA->SetField(-2, "__index");
 

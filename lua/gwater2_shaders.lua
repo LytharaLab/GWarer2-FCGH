@@ -35,71 +35,70 @@ local debug_normals = CreateClientConVar("gwater2_debug_normals", "0", false)
 local debug_mipmap = CreateClientConVar("gwater2_debug_mipmap", "0", false)
 
 local queue_mode = GetConVar("mat_queue_mode")
-local previous_queue_mode
+local saved_queue_mode
 local restore_queue_at
 
-local function is_render_context_queued()
-	return gwater2.renderer.IsRenderContextQueued and gwater2.renderer:IsRenderContextQueued()
+local function can_render()
+	local renderer = gwater2.renderer
+	return not renderer.CanRenderInCurrentContext or renderer:CanRenderInCurrentContext()
 end
 
-local function restore_queue_mode()
-	if previous_queue_mode ~= nil and queue_mode:GetInt() == 0 then
-		RunConsoleCommand("mat_queue_mode", tostring(previous_queue_mode))
+local function restore_queue()
+	if saved_queue_mode ~= nil and queue_mode:GetInt() == 0 then
+		RunConsoleCommand("mat_queue_mode", tostring(saved_queue_mode))
 	end
-	previous_queue_mode = nil
-	restore_queue_at = nil
+	saved_queue_mode, restore_queue_at = nil, nil
 end
 
+-- The stock queue stays enabled on supported builds. Keep the serial fallback
+-- for a material-system revision with an unrecognized queue implementation.
 hook.Add("Think", "gwater2_material_queue", function()
 	if not queue_mode then return end
-	if gwater2.solver:GetActiveParticles() == 0 then
-		if previous_queue_mode ~= nil then
-			restore_queue_at = restore_queue_at or SysTime() + 1
-			if SysTime() >= restore_queue_at then restore_queue_mode() end
+	if gwater2.solver:GetActiveParticles() > 0 then
+		restore_queue_at = nil
+		if saved_queue_mode == nil and queue_mode:GetInt() ~= 0 and not can_render() then
+			saved_queue_mode = queue_mode:GetInt()
+			RunConsoleCommand("mat_queue_mode", "0")
 		end
-		return
-	end
-
-	restore_queue_at = nil
-	if previous_queue_mode == nil and queue_mode:GetInt() ~= 0 and is_render_context_queued() then
-		-- GMod Main can stall in the material system while the 3D water passes run in queued mode.
-		previous_queue_mode = queue_mode:GetInt()
-		RunConsoleCommand("mat_queue_mode", "0")
+	elseif saved_queue_mode ~= nil then
+		restore_queue_at = restore_queue_at or SysTime() + 1
+		if SysTime() >= restore_queue_at then restore_queue() end
 	end
 end)
-hook.Add("ShutDown", "gwater2_material_queue", restore_queue_mode)
+hook.Add("ShutDown", "gwater2_material_queue", restore_queue)
 
--- sets up a lighting origin in sourceengine
--- TODO: cache your fucking tables and csmodels!!!
-local function unfuck_lighting(pos0, pos1)
+local clear_color = Color(0, 0, 0, 0)
+local cubemap_model = {model = "models/shadertest/envballs.mdl"}
+local light_model = {model = "models/shadertest/vertexlit.mdl"}
+
+local function setup_lighting(pos)
+	local angle = EyeAngles()
+	cubemap_model.pos, cubemap_model.angle = pos, angle
+	light_model.pos, light_model.angle = pos, angle
 	render.OverrideColorWriteEnable(true, false)
 	render.OverrideDepthEnable(true, false)
-	render.Model({model = "models/shadertest/envballs.mdl",pos = pos0, angle = EyeAngles()})	-- cubemap
-	render.Model({model = "models/shadertest/vertexlit.mdl",pos = pos1, angle = EyeAngles()}) 	-- lighting
+	render.Model(cubemap_model)
+	render.Model(light_model)
 	render.OverrideDepthEnable(false, false)
 	render.OverrideColorWriteEnable(false, false)
 end
 
-local lightpos = EyePos()
-local function do_cloth()
-	unfuck_lighting(gwater2.cloth_pos, gwater2.cloth_pos)	-- fix cloth lighting, mostly
-	render.SetMaterial(cloth)
-	gwater2.renderer:DrawCloth()
-	render.RenderFlashlights(function() gwater2.renderer:DrawCloth() end)
+local function draw_water() gwater2.renderer:DrawWater() end
+local function draw_diffuse() gwater2.renderer:DrawDiffuse() end
+local function draw_cloth() gwater2.renderer:DrawCloth() end
 
-	-- setup water lighting
-	--local tr = util.QuickTrace( EyePos(), LocalPlayer():EyeAngles():Forward() * 800, LocalPlayer())
-	--local dist = math.min(230, (tr.HitPos - tr.StartPos):Length() / 1.5)	
-	--lightpos = LerpVector(1.6 * FrameTime(), lightpos, EyePos() + (LocalPlayer():EyeAngles():Forward() * dist))	-- fucking hell
-	unfuck_lighting(EyePos(), EyePos())	
+local function do_cloth()
+	setup_lighting(gwater2.cloth_pos)
+	render.SetMaterial(cloth)
+	draw_cloth()
+	render.RenderFlashlights(draw_cloth)
 end
 
-local function do_absorption()
+local function do_absorption(alpha)
 	render.UpdateScreenEffectTexture()	-- _rt_framebuffer is used in refraction shader
 
 	-- depth absorption (disabled when opaque liquids are enabled)
-	local _, _, _, a = water:GetVector4D("$color2")
-	if water_volumetric:GetFloat("$alpha") != 0 and a > 0 and a < 255 then
+	if water_volumetric:GetFloat("$alpha") != 0 and alpha > 0 and alpha < 255 then
 		-- ANTIALIAS FIX! (courtesy of Xenthio)
 			-- how it works: 
 			-- Clear the main rendertarget, keeping depth
@@ -111,14 +110,10 @@ local function do_absorption()
 		render.DrawScreenQuad()
 
 		render.SetMaterial(water_volumetric)
-		gwater2.renderer:DrawWater()
+		draw_water()
 		render.CopyTexture(render.GetRenderTarget(), cache_absorption)
 		render.DrawTextureToScreen(cache_screen0)
 
-		--render.PushRenderTarget(cache_absorption)
-		--render.SetMaterial(water_volumetric)
-		--gwater2.renderer:DrawWater()
-		--render.PopRenderTarget()
 	else
 		-- no absorption calculations, so just use solid color
 		render.PushRenderTarget(cache_absorption)
@@ -128,23 +123,16 @@ local function do_absorption()
 end
 
 local function do_diffuse_inside()
-	-- dont render bubbles underwater if opaque
-	local _, _, _, a = water:GetVector4D("$color2")
-	if a < 255 then
-		-- Bubble particles inside water
-		-- Make sure the water screen texture has bubbles but the normal framebuffer does not
-		render.SetMaterial(water_bubble)
-		render.UpdateScreenEffectTexture(1)
-		gwater2.renderer:DrawDiffuse()
-		render.RenderFlashlights(function() gwater2.renderer:DrawDiffuse() end)
-		render.CopyTexture(render.GetRenderTarget(), cache_screen0)
-		render.DrawTextureToScreen(cache_screen1)
-	end
+	-- The refraction texture includes bubbles, while the main scene does not.
+	render.SetMaterial(water_bubble)
+	render.UpdateScreenEffectTexture(1)
+	draw_diffuse()
+	render.RenderFlashlights(draw_diffuse)
+	render.CopyTexture(render.GetRenderTarget(), cache_screen0)
+	render.DrawTextureToScreen(cache_screen1)
 end
 
-local function do_normals()
-	local radius = gwater2.solver:GetParameter("radius")
-
+local function do_normals(radius, passes)
 	-- stencils are used to only blur the pixels we want
 	render.SetStencilWriteMask(0xFF)
 	render.SetStencilTestMask(0xFF)
@@ -162,22 +150,24 @@ local function do_normals()
 	render.PushRenderTarget(cache_normals)
 	render.SetRenderTargetEx(1, cache_mipmap)
 	render.ClearDepth()
-	gwater2.renderer:DrawWater()
+	draw_water()
 	render.PopRenderTarget()
 	render.SetRenderTargetEx(1, nil)
 
 	render.SetStencilCompareFunction(STENCIL_EQUAL)
 	render.SetStencilEnable(false)
 	
-	-- Blur normals
+	if passes < 1 then return end
+
 	local scrw = 1 / ScrW()
 	local scrh = 1 / ScrH()
+	local scale_base = 0.3 * blur_scale:GetFloat()
 
 	water_blur:SetFloat("$radius", radius)
 	water_blur:SetTexture("$depthtexture", cache_mipmap)
 	render.SetMaterial(water_blur)
-	for i = 1, blur_passes:GetInt() do
-		local scale = (0.3 / i) * blur_scale:GetFloat()
+	for i = 1, passes do
+		local scale = scale_base / i
 
 		-- Blur X
 		water_blur:SetTexture("$normaltexture", cache_normals)
@@ -191,7 +181,7 @@ local function do_normals()
 		
 		water_blur:SetTexture("$normaltexture", cache_blur)
 		water_blur:SetVector("$scrs", Vector(0, scale * scrh))
-		render.SetStencilEnable(i < blur_passes:GetInt())	-- disable stencils on last pass
+		render.SetStencilEnable(i < passes)	-- disable stencils on last pass
 		render.PushRenderTarget(cache_normals)
 		render.DrawScreenQuad()
 		render.PopRenderTarget()
@@ -200,31 +190,16 @@ local function do_normals()
 	render.SetStencilEnable(false)
 end
 
-local function do_finalpass()
-	local radius = gwater2.solver:GetParameter("radius")
-
+local function do_finalpass(radius, passes)
 	-- Setup water material parameters
 	water:SetFloat("$radius", radius * 1.5)
-	water:SetFloat("$reflectance", blur_passes:GetBool() and 0.7 or 0)
+	water:SetFloat("$reflectance", passes ~= 0 and 0.7 or 0)
 	water:SetTexture("$normaltexture", cache_normals)
 	water:SetTexture("$depthtexture", cache_absorption)
 	render.SetMaterial(water)
-	gwater2.renderer:DrawWater()
-	render.RenderFlashlights(function() gwater2.renderer:DrawWater() end)
-
-	render.SetMaterial(water_mist)
-	gwater2.renderer:DrawDiffuse()
-	render.RenderFlashlights(function() gwater2.renderer:DrawDiffuse() end)
+	draw_water()
+	render.RenderFlashlights(draw_water)
 end
-
-hook.Add("RenderScene", "gwater2_render", function(eye_pos, eye_angles, fov)
-	if gwater2.options.render_mirrors:GetInt() != 1 then return end
-	if is_render_context_queued() then return end
-
-	cam.Start3D(eye_pos, eye_angles, fov)
-		gwater2.renderer:BuildMeshes(gwater2.solver, 0.25, false)
-	cam.End3D()
-end)
 
 -- vrmod does not render to the main RT, force enable mirror rendering
 hook.Add("VRMod_Start", "gwater2_vrmodsupport", function(ply)
@@ -235,38 +210,43 @@ end)
 
 -- gwater2 shader pipeline
 local vrmod_material = Material("models/wireframe")
-hook.Add("PostDrawOpaqueRenderables", "gwater2_render", function(depth, sky, sky3d)	--PreDrawViewModels
-	if sky3d then return end	-- dont render in skybox
+hook.Remove("RenderScene", "gwater2_render")
+hook.Add("PostDrawOpaqueRenderables", "gwater2_render", function(depth, sky, sky3d)
+	if depth or sky3d then return end
 	if gwater2.solver:GetActiveParticles() < 1 then return end
-	if is_render_context_queued() then return end
+	if not can_render() then return end
 
- 	-- dont render in mirrors unless specified
 	local mirrors = gwater2.options.render_mirrors:GetInt()
-	if mirrors != 1 then
-		if mirrors == 0 and render.GetRenderTarget() then return end
-		gwater2.renderer:BuildMeshes(gwater2.solver, 0.25, true)
-	end
+	if mirrors == 0 and render.GetRenderTarget() then return end
 
-	do_cloth()
+	local has_water, has_diffuse, has_cloth = gwater2.renderer:BuildMeshes(gwater2.solver, 0.25, mirrors ~= 1)
+	if not (has_water or has_diffuse or has_cloth) then return end
+	if has_cloth then do_cloth() end
+	setup_lighting(EyePos())
+	if not (has_water or has_diffuse) then return end
 
-	-- vrmod is fucked. do this for now
 	if vrmod and vrmod.IsPlayerInVR(LocalPlayer()) then
 		render.SetMaterial(vrmod_material)
-		gwater2.renderer:DrawWater()
-
-		return 
+		draw_water()
+		return
 	end
-	
-	-- Clear render targets
-	render.ClearRenderTarget(cache_normals, Color(0, 0, 0, 0))
-	render.ClearRenderTarget(cache_mipmap, Color(0, 0, 0, 0))
-	render.ClearRenderTarget(cache_absorption, Color(0, 0, 0, 0))
-	render.ClearRenderTarget(cache_blur, Color(0, 0, 0, 0))
 
-	do_absorption()
-	do_diffuse_inside()
-	do_normals()
-	do_finalpass()
+	if has_water then
+		render.ClearRenderTarget(cache_normals, clear_color)
+		render.ClearRenderTarget(cache_mipmap, clear_color)
+		local _, _, _, alpha = water:GetVector4D("$color2")
+		do_absorption(alpha)
+		if has_diffuse and alpha < 255 then do_diffuse_inside() end
+		local radius, passes = gwater2.solver:GetParameter("radius"), blur_passes:GetInt()
+		do_normals(radius, passes)
+		do_finalpass(radius, passes)
+	end
+	if has_diffuse then
+		render.SetMaterial(water_mist)
+		draw_diffuse()
+		render.RenderFlashlights(draw_diffuse)
+	end
+	if not has_water then return end
 
 	-- Debug Draw
 	local dbg = 0

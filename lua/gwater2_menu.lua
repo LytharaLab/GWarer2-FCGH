@@ -3,7 +3,7 @@ AddCSLuaFile()
 if SERVER or not gwater2 then return end
 
 gwater2.VERSION = "1.0" -- Upstream GWater2 version exposed to Lua.
-gwater2.FCGH_VERSION = "1.0.1"
+gwater2.FCGH_VERSION = "1.1.0"
 gwater2.FCGH_TITLE = "GWater2FCGH " .. gwater2.FCGH_VERSION
 
 local just_closed = false

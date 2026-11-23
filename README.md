@@ -14,11 +14,9 @@
 
 需要 GMod Main 64-bit (Windows)（由 CGH 启动的 `gmod_win64.exe`）、支持 Direct3D 11 的显卡、Con's GMod Host 1.2.2、CGH-LAPI 0.2.0。
 
-1. 解压 `GWater2FCGH-v1.0.1.zip` 或从源码构建得到的 `GWater2FCGH.zip`，把整个 `GWater2FCGH` 文件夹放进 CGH Launcher 的 `Mods`。从旧版升级时，先退出 GMod，再一起更新模组的元数据、原生 DLL 和 Lua 文件。
+1. 解压 `GWater2FCGH-*.zip` 或从源码构建得到的 `GWater2FCGH.zip`，把整个 `GWater2FCGH` 文件夹放进 CGH Launcher 的 `Mods`。
 2. 在 Steam Workshop 和本地 addons 中停用原版 GWater2，以免游戏挂载两套同名 Lua 和资源。
-3. 从 CGH Launcher 启动游戏。进图后按 **G** 打开 GWater2FCGH 菜单。
-
-CGH 从模组的 `Native/` 加载后端和 FleX，游戏内容经 `Addons/gwater2/` 挂载。GWater2FCGH 所需的原生文件都在模组包内。
+3. 从 CGH Launcher 启动游戏。
 
 ## 从源码构建
 

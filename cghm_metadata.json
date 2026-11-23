@@ -2,7 +2,7 @@
   "schemaVersion": 1,
   "id": "gwater2.fcgh",
   "name": "GWater2 For Con's GMod Host",
-  "version": "1.0.1",
+  "version": "1.1.0",
   "description": "GWater2FCGH is an unofficial port of Meetric's GWater2 for GMod Main 64-bit (Windows) and Con's GMod Host.",
   "author": "Meetric and the GWater2 contributors; CGH port by GWater2FCGH contributors",
   "enabled": true,

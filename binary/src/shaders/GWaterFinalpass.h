@@ -1,4 +1,5 @@
 #include <BaseVSShader.h>
+#include "flex_renderer.h"
 
 #include "shaders/inc/GWaterFinalpass_vs30.inc"
 #include "shaders/inc/GWaterFinalpass_ps30.inc"
@@ -103,35 +104,23 @@ SHADER_DRAW {
 	}
 
 	DYNAMIC_STATE {
-		// get view projection matrix
-		CMatRenderContextPtr pRenderContext(materials);
-		VMatrix viewMatrix, projectionMatrix, viewProjectionMatrix, inverseViewProjectionMatrix;
-		pRenderContext->GetMatrix(MATERIAL_VIEW, &viewMatrix);
-		pRenderContext->GetMatrix(MATERIAL_PROJECTION, &projectionMatrix);
-		MatrixMultiply(projectionMatrix, viewMatrix, viewProjectionMatrix);
-		//MatrixInverseGeneral(viewProjectionMatrix, inverseViewProjectionMatrix);
-		float matrix[16];
-		for (int i = 0; i < 16; i++) {
-			int x = i % 4;
-			int y = i / 4;
-			matrix[i] = viewProjectionMatrix[y][x];
-		}
+		const VMatrix viewProjection = gwater_view_projection(*gwater_render_context());
 
 		// constants
 		int scr_x, scr_y; pShaderAPI->GetBackBufferDimensions(scr_x, scr_y);
-		const float scr_s[2] = { 1.0 / scr_x, 1.0 / scr_y };
-		float radius = params[RADIUS]->GetFloatValue();
-		float ior = params[IOR]->GetFloatValue();
-		float reflectance = params[REFLECTANCE]->GetFloatValue();
+		const float scr_s[4] = { 1.0f / scr_x, 1.0f / scr_y };
+		const float radius[4] = { params[RADIUS]->GetFloatValue() };
+		const float ior[4] = { params[IOR]->GetFloatValue() };
+		const float reflectance[4] = { params[REFLECTANCE]->GetFloatValue() };
 		const float* color2 = params[COLOR2]->GetVecValue();
 		const float color2_normalized[4] = { color2[0] / 255.0, color2[1] / 255.0, color2[2] / 255.0, color2[3] / 255.0 };
 
 		pShaderAPI->SetPixelShaderConstant(0, scr_s);
-		pShaderAPI->SetPixelShaderConstant(1, &radius);
-		pShaderAPI->SetPixelShaderConstant(2, &ior);
-		pShaderAPI->SetPixelShaderConstant(3, &reflectance);
+		pShaderAPI->SetPixelShaderConstant(1, radius);
+		pShaderAPI->SetPixelShaderConstant(2, ior);
+		pShaderAPI->SetPixelShaderConstant(3, reflectance);
 		pShaderAPI->SetPixelShaderConstant(4, color2_normalized);
-		pShaderAPI->SetPixelShaderConstant(5, matrix, 4, true);
+		pShaderAPI->SetPixelShaderConstant(5, viewProjection.Base(), 4);
 		//pShaderAPI->SetPixelShaderStateAmbientLightCube(9, false);
 
 		BindTexture(SHADER_SAMPLER0, NORMALTEXTURE);

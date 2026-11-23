@@ -56,9 +56,9 @@ SHADER_DRAW {
 
 	DYNAMIC_STATE {
 		// constants
-		const float alpha = params[ALPHA]->GetFloatValue();
+		const float alpha[4] = { params[ALPHA]->GetFloatValue() };
 
-		pShaderAPI->SetPixelShaderConstant(0, &alpha);
+		pShaderAPI->SetPixelShaderConstant(0, alpha);
 		BindTexture(SHADER_SAMPLER0, BASETEXTURE);
 
 		DECLARE_DYNAMIC_VERTEX_SHADER(GWaterVolumetric_vs30);
